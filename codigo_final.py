@@ -137,4 +137,49 @@ df_entrega = df.copy()
 
 df_entrega = df_entrega.merge(df_precios[["fechaid","completado"]], how="left", on="fechaid")
 
+## Añadir columnas de Variación
+
+df_2 = df_entrega[["id","fecha","completado","fechaid"]].sort_values(["id", "fecha"])
+
+id_unique = df_2["id"].unique()
+
+list_final_var = []
+list_final_porc = []
+
+for x in id_unique:
+    
+    df_corte_id = df_2[df_2["id"]==x]
+    column_precio_id = df_corte_id["completado"].tolist()
+    
+    value = column_precio_id[0]
+    
+    list_variacion = []
+    list_porc = []
+        
+    for y in column_precio_id:
+            
+            variacion = y - value
+            porcentaje = (variacion / value )* 100
+            
+            list_variacion.append(variacion)
+            list_porc.append(porcentaje)
+            
+            value = y
+    
+    list_final_var = list_final_var + list_variacion
+    list_final_porc = list_final_porc + list_porc
+
+# Crear df_variacion para posterior merge
+column_fechaid = df_2["fechaid"].tolist()
+column_precio = df_2["completado"].tolist()
+
+import pandas as pd
+
+df_variacion = pd.DataFrame({'variacion' : list_final_var,
+                             '%_var' : list_final_porc,
+                             'precio' : column_precio,
+                             'fechaid':column_fechaid})    
+
+df_entrega = df_entrega.merge(df_variacion[["fechaid","variacion","%_var"]], how="left", on="fechaid")
+
 print(df_entrega.head())
